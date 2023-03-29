@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphical Objects App</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+        #popup {
+            position: fixed;
+            border: 1px solid black;
+            padding: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas" width="800" height="600"></canvas>
+<div id="popup"></div>
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const popup = document.getElementById('popup');
+  const objectCount = 100000;
+  const eventCount = 2000;
+  class GraphicalObject {
+    constructor(x, y, color) {
+      this.x = x;
+      this.y = y;
+      this.color = color;
+      this.selected = false;
+    }
+
+    draw() {
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.selected ? 6 : 5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    distance(x, y) {
+      return Math.sqrt(Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2));
+    }
+  }
+
+  const objects = [];
+
+  for (let i = 0; i < objectCount; i++) {
+    objects.push(new GraphicalObject(
+      Math.random() * canvas.width,
+      Math.random() * canvas.height,
+      `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`
+    ));
+  }
+
+  function drawObjects() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    objects.forEach(obj => obj.draw());
+  }
+
+  function updateColor(index) {
+    objects[index].color = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`;
+  }
+
+  function randomColorUpdate() {
+    for (let i = 0; i < eventCount; i++) {
+      updateColor(Math.floor(Math.random() * objectCount));
+    }
+    drawObjects();
+    requestAnimationFrame(randomColorUpdate);
+  }
+
+  canvas.addEventListener('click', (e) => {
+    const x = e.clientX - canvas.offsetLeft;
+    const y = e.clientY - canvas.offsetTop;
+    let selectedObject = null;
+    let minDist = Infinity;
+
+    objects.forEach((obj, index) => {
+      obj.selected = false;
+      const dist = obj.distance(x, y);
+      if (dist < 6 && dist < minDist) {
+        minDist = dist;
+        selectedObject = index;
+      }
+    });
+
+    if (selectedObject !== null) {
+      objects[selectedObject].selected = true;
+      popup.style.display = 'block';
+      popup.style.left = `${e.pageX + 5}px`;
+      popup.style.top = `${e.pageY + 5}px`;
+      popup.textContent = `Color: ${objects[selectedObject].color}`;
+
+      drawObjects();
+    } else {
+      popup.style.display = 'none';
+    }
+  });
+
+  drawObjects();
+  requestAnimationFrame(randomColorUpdate);
+</script>
+</body>
+</html>
